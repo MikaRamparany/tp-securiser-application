@@ -25,25 +25,31 @@
 	</div>
 	
 <?php
-	if( isset( $_POST[ 'ip' ] ) &&  $_POST[ 'ip' ] != "") {
-		// Get input
-		$target = $_REQUEST[ 'ip' ];
+	    if( isset( $_POST[ 'ip' ] ) &&  $_POST[ 'ip' ] != "") {
+        // Get input
+        $target = $_REQUEST[ 'ip' ];
 
-		// Determine OS and execute the ping command.
-		if( stristr( php_uname( 's' ), 'Windows NT' ) ) {
-			// Windows
-			$cmd = shell_exec( 'ping  ' . $target );
-		}
-		else {
-			// *nix
-			$cmd = shell_exec( 'ping  -c 4 ' . $target );
-		}
+        // Validation IPv4 
+        if (filter_var($target, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+            
+            $escapedTarget = escapeshellarg($target);
 
-		// Feedback for the end user
-		echo "<pre>".$cmd."</pre>";
-	}
+         
+            if( stristr( php_uname( 's' ), 'Windows NT' ) ) {
+                
+                $cmd = shell_exec( 'ping ' . $escapedTarget );
+            }
+            else {
+               
+                $cmd = shell_exec( 'ping -c 4 ' . $escapedTarget );
+            }
+
+         
+            echo "<pre>".$cmd."</pre>";
+        } else {
+            echo '<div class="alert alert-danger">Adresse IP invalide.</div>';
+        }
+    }
 	
 	include ("_partial/soluce.php"); 	
 ?>
-	
-</div>
