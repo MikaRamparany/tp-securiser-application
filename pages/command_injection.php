@@ -25,31 +25,24 @@
 	</div>
 	
 <?php
-	    if( isset( $_POST[ 'ip' ] ) &&  $_POST[ 'ip' ] != "") {
-        // Get input
-        $target = $_REQUEST[ 'ip' ];
-
-        // Validation IPv4 
-        if (filter_var($target, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
-            
-            $escapedTarget = escapeshellarg($target);
-
-         
-            if( stristr( php_uname( 's' ), 'Windows NT' ) ) {
-                
-                $cmd = shell_exec( 'ping ' . $escapedTarget );
-            }
-            else {
-               
-                $cmd = shell_exec( 'ping -c 4 ' . $escapedTarget );
-            }
-
-         
-            echo "<pre>".$cmd."</pre>";
+	  if (isset($_POST['ip']) && $_POST['ip'] !== "") {
+    $target = $_POST['ip'];  // Utilise $_POST au lieu de $_REQUEST
+    if (filter_var($target, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+        $escapedTarget = escapeshellarg($target);
+        if (stristr(php_uname('s'), 'Windows NT')) {
+            $cmd = shell_exec('ping ' . $escapedTarget);
         } else {
-            echo '<div class="alert alert-danger">Adresse IP invalide.</div>';
+            $cmd = shell_exec('ping -c 4 ' . $escapedTarget);
         }
+        if (empty($cmd)) {
+            echo '<div class="alert alert-warning">Aucune réponse de l\'hôte.</div>';
+        } else {
+            echo "<pre>" . htmlspecialchars($cmd) . "</pre>";  // Échappement de la sortie
+        }
+    } else {
+        echo '<div class="alert alert-danger">Adresse IP invalide.</div>';
     }
+}
 	
 	include ("_partial/soluce.php"); 	
 ?>
