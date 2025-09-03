@@ -16,29 +16,49 @@
 
 // -- CAS 2 --
 function loadEnv(string $path): void {
-  if (!is_file($path)) return;
-  foreach (file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
-    $line = trim($line);
-    if ($line === '' || $line[0] === '#') continue;
-    [$k,$v] = array_map('trim', explode('=', $line, 2));
-    putenv("$k=$v");
-  }
+    if (!is_file($path)) {
+        throw new Exception("Le fichier .env est introuvable à l'emplacement : $path");
+    }
+
+    foreach (file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
+        $line = trim($line);
+        if ($line === '' || strpos($line, '#') === 0) {
+            continue; // Ignorer les lignes vides et les commentaires
+        }
+
+        [$key, $value] = array_map('trim', explode('=', $line, 2));
+        if (!empty($key)) {
+            putenv("$key=$value");
+        }
+    }
 }
 
-loadEnv(__DIR__.'/config/.env');
+// Charger le fichier .env
+try {
+    loadEnv(__DIR__ . '/config/.env');
+} catch (Exception $e) {
+    die("Erreur de configuration : " . $e->getMessage());
+}
 
+// Configuration de la connexion PDO
 $dsn = sprintf(
-  'mysql:host=%s;dbname=%s;charset=utf8mb4',
-  getenv('DB_HOST') ?: 'localhost',
-  getenv('DB_NAME') ?: 'phpsec'
+    'mysql:host=%s;dbname=%s;charset=utf8mb4',
+    getenv('DB_HOST') ?: die("DB_HOST non défini dans .env"),
+    getenv('DB_NAME') ?: die("DB_NAME non défini dans .env"), 
 );
 
-$db = new PDO(
-  $dsn,
-  getenv('DB_USER') ?: 'root',
- (getenv('DB_PASS') !== false ? getenv('DB_PASS') : null),
-  [
-    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-  ]
-);
+// Connexion à la base de données
+try {
+    $db = new PDO(
+        $dsn,
+        getenv('DB_USER'),
+        getenv('DB_PASS'),
+        [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+            PDO::ATTR_EMULATE_PREPARES => false, // Désactiver l'émulation des requêtes préparées
+        ]
+    );
+} catch (PDOException $e) {
+    die("Erreur de connexion à la base de données : " . $e->getMessage());
+}
